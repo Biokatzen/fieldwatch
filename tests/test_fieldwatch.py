@@ -5,6 +5,8 @@ import pytest
 from fieldwatch import (AlertConfig, flag_fields, peer_zscores, season_mask, weekly_matrix)
 from fetch_sentinel2_gee import rows_to_frame
 from prepare_fields_csb import features_to_gdf
+from neighborhood_check import classify, neighbor_gap
+from validate_alerts import build_sheet_table, score_ratings
 from run_weekly_report import build, parse_windows, to_html
 
 CFG = AlertConfig()
@@ -132,3 +134,57 @@ def test_rows_to_frame_cleans_and_sorts():
     assert list(ts["field_id"]) == ["A", "B"] and ts.loc[1, "ndvi"] == 0.5123
     with pytest.raises(SystemExit, match="without columns"):
         rows_to_frame([{"field_id": "A", "date": "2023-04-02", "mean": 0.5}])  # the original bug's symptom
+
+
+def _alerts(ids):
+    return pd.DataFrame({"field_id": ids, "severity": np.linspace(3, 2, len(ids))})
+
+
+def test_blind_sheet_mixes_groups_and_controls_exclude_alerted_fields():
+    all_ids = [f"F{i:03d}" for i in range(100)]
+    alerts = _alerts(all_ids[:9])
+    tab = build_sheet_table(alerts, all_ids, n_alerts=9, n_controls=9, seed=1)
+    assert len(tab) == 18 and tab["blind_id"].is_unique and tab["field_id"].is_unique
+    assert set(tab.loc[tab.group == "control", "field_id"]).isdisjoint(alerts["field_id"])
+    assert set(tab.loc[tab.group == "alert", "field_id"]) == set(all_ids[:9])
+    assert list(tab["group"]) != sorted(tab["group"])  # shuffled, not grouped
+
+
+def test_score_ratings_compares_groups_and_rejects_blank_verdicts():
+    key = pd.DataFrame({"blind_id": ["V1", "V2", "V3", "V4", "V5"], "field_id": list("abcde"),
+                        "group": ["alert", "alert", "alert", "control", "control"]})
+    ratings = pd.DataFrame({"blind_id": key["blind_id"], "verdict": ["problem", "Problem ", "unclear", "ok", "problem"]})
+    res = score_ratings(ratings, key)
+    assert res.loc["alert", "problems"] == 2 and res.loc["alert", "rated"] == 2 and res.loc["alert", "problem_rate"] == 1.0
+    assert res.loc["alert", "unclear"] == 1 and res.loc["control", "problem_rate"] == 0.5
+    ratings.loc[0, "verdict"] = ""
+    with pytest.raises(ValueError, match="unrated"):
+        score_ratings(ratings, key)
+
+
+def _grid_scores():
+    """6x6 grid of fields: the west half is a low-score region, the east half is normal, plus one isolated bad field."""
+    rng = np.random.default_rng(0)
+    rows = []
+    for i in range(6):
+        for j in range(6):
+            rows.append((f"R{i}{j}", -38.0 + 0.02 * j, 38.0 + 0.02 * i))
+    coords = pd.DataFrame(rows, columns=["field_id", "lon", "lat"]).set_index("field_id")
+    score = pd.Series({fid: (-2.5 if c.lon < -37.95 else 0.0) + rng.normal(0, 0.1) for fid, c in coords.iterrows()})
+    score["R45"] = -3.0  # isolated bad field in the normal (east) region
+    return score, coords
+
+
+def test_neighbor_gap_separates_regional_from_field_specific_alerts():
+    score, coords = _grid_scores()
+    table = neighbor_gap(score, coords, k=5)
+    res = classify(table, ["R20", "R45"])  # R20: inside the low west region; R45: isolated
+    assert res.loc["R20", "type"] == "regional"
+    assert res.loc["R45", "type"] == "field-specific"
+    assert res.loc["R45", "gap"] < -1.0 < res.loc["R20", "gap"]
+
+
+def test_neighbor_gap_rejects_too_few_fields():
+    score, coords = _grid_scores()
+    with pytest.raises(ValueError, match="need more than"):
+        neighbor_gap(score.head(5), coords, k=8)

@@ -48,6 +48,15 @@ thumbnails that **mixes alerted fields with random non-alerted controls under an
 ratings are not biased by knowing which is which. You then rate each field (problem / ok / unclear)
 and the script compares the problem rate in alerted vs control fields.
 
+### Regional or field-specific?
+For the week of 2023-05-01, each alerted field was compared with its 8 nearest fields in the sample
+(`neighborhood_check.py`, radius about 4-14 km). All 9 alerts were field-specific: they sit at least one
+robust standard deviation below their neighbours, whose mean scores range from -0.64 to +0.25. Across all
+150 fields, the correlation between a field's score and its neighbours' mean score was 0.01. So the alerts
+are not explained by county-scale low-NDVI regions. This does not show that they are agronomic problems,
+and because the 150 fields are a sample of the county it cannot see differences between immediately
+adjacent fields.
+
 ## Limitations
 - **No measured accuracy yet** (see validation status above). One county and one season only.
 - Peers are defined by crop only. A field sown later than its neighbours can look like an underperformer;
@@ -81,7 +90,7 @@ python validate_alerts.py make --alerts reports/ks/alerts_2023-05-01.csv --field
 python validate_alerts.py score --ratings validation/ks_2023-05-01/ratings.csv \
        --key validation/ks_2023-05-01/key.csv
 
-pytest                            # 13 unit tests
+pytest                            # 15 unit tests
 ```
 With your own fields, provide two CSVs: `fields.csv` (`field_id, crop[, lon, lat]`) and
 `ndvi_timeseries.csv` (`field_id, date, ndvi`, cloud-masked).
@@ -94,6 +103,7 @@ With your own fields, provide two CSVs: `fields.csv` (`field_id, crop[, lon, lat
 | `prepare_fields_csb.py` | select winter-wheat fields from USDA Crop Sequence Boundaries |
 | `fetch_sentinel2_gee.py` | Sentinel-2 NDVI download per field (Earth Engine) |
 | `validate_alerts.py` | blind check: alerted vs control fields on Sentinel-2 thumbnails |
-| `tests/` | 13 unit tests on small hand-made tables (they check the code logic, e.g. that no future data is used; they are not results) |
+| `neighborhood_check.py` | tests whether alerts are field-specific or regional (compares with nearest fields) |
+| `tests/` | 15 unit tests on small hand-made tables (they check the code logic, e.g. that no future data is used; they are not results) |
 
 MIT License
