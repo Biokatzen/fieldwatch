@@ -1,8 +1,8 @@
 """Create the weekly alert report (CSV + self-contained HTML) from NDVI time series.
 
 Usage:
-  python run_weekly_report.py --fields data/demo/fields.csv --ndvi data/demo/ndvi_timeseries.csv \
-         --week 2025-06-16 --out reports
+  python run_weekly_report.py --fields data/ks/fields.csv --ndvi data/ks/ndvi_timeseries.csv \
+         --window winter_wheat=04-01:05-31 --week 2023-05-01 --out reports/ks
 Without --week the latest week in the data is used.
 """
 from __future__ import annotations

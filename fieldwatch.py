@@ -4,8 +4,8 @@ Idea: a field is suspicious when it stays far below its *peers* (same crop, same
 for several weeks in a row. Comparing with peers removes the normal seasonal curve
 and weather effects, so no yield labels are needed.
 
-Everything here is causal: results for week t only use data up to week t, so the
-backtest in evaluate.py reflects what would happen in real operation.
+Everything here is causal: results for week t only use data up to week t, so the output is
+what would have been available in real time (a unit test checks this).
 
 Input tables
 ------------

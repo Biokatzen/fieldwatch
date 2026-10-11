@@ -2,7 +2,7 @@
 
 Column names below were taken from a real CSB feature (Saline County, Kansas):
 CDL2023 (24 = winter wheat), CROP23, ACRES, CNTY, STATEFIPS, CSBID.
-The Earth Engine part is NOT tested end to end; the conversion to a GeoDataFrame is unit-tested.
+Ran successfully on real data (Kansas, 2023); the conversion to a GeoDataFrame is unit-tested.
 
 CSB polygons are algorithmic field estimates (not property boundaries) and the crop label comes
 from satellite classification. Say so when you present results.

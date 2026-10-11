@@ -1,9 +1,8 @@
 """Download per-field Sentinel-2 NDVI time series with Google Earth Engine (GEE).
 
-!! The Earth Engine calls are NOT tested end to end by the author (no access to the live API).
-!! A first version silently returned 0 rows (property name bug); fixed with setOutputs.
-!! Expect to adjust small things (auth, project name, field-count limits). The output format
-!! is what matters: the two CSVs below are all the rest of the project needs.
+Ran successfully on real data (Kansas winter wheat, 2023). A first version silently returned
+0 rows (property name bug); fixed with setOutputs. The output format is what matters: the two
+CSVs below are all the rest of the project needs.
 
 Input : field boundaries (GeoJSON / GeoPackage / Shapefile) with columns `field_id` and `crop`
         (crop = one of winter_wheat, maize, sugar_beet, or edit SEASON_WINDOWS in fieldwatch.py).
@@ -13,8 +12,8 @@ Output: <out>/fields.csv           field_id, crop, lon, lat
         <out>/ndvi_timeseries.csv  field_id, date, ndvi
 
 Setup:  pip install earthengine-api geopandas ; earthengine authenticate
-Usage:  python fetch_sentinel2_gee.py --fields my_fields.gpkg --start 2025-03-01 --end 2025-09-30 \
-            --project my-gcp-project --out data/real
+Usage:  python fetch_sentinel2_gee.py --fields my_fields.gpkg --start 2023-03-01 --end 2023-06-15 \
+            --project my-gcp-project --out data/ks
 """
 from __future__ import annotations
 
