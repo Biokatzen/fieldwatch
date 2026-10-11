@@ -9,7 +9,9 @@ visit a few each week. Which ones should they visit first?
 Sentinel-2 NDVI and flags fields that stay well below them for several weeks. It needs **no yield
 labels**, and the output is a ranked list plus a one-page report that can be sent as-is.
 
-> See a sample report: [`docs/example_report.html`](docs/example_report.html) (download and open in a browser)
+![Weekly report, Kansas winter wheat, week of 2023-05-01](docs/kansas_report.png)
+
+*Weekly report on real data (Kansas winter wheat). [Synthetic-data example as HTML](docs/example_report.html): download and open in a browser.*
 
 ## How it works
 1. **Weekly composite:** max-value composite per week (suppresses residual clouds), then a trailing
@@ -62,7 +64,7 @@ gradual stress 59% (6 weeks; it develops slowly, so it is also the hardest).
 - Late-sown fields can look like underperformers, since peers are defined by crop only. Adding sowing date, variety or
   region to the peer definition is the natural next step.
 - Monitoring windows are hand-set per crop; harvest/mowing detection is not implemented.
-- `fetch_sentinel2_gee.py` (real Sentinel-2 download) is **written but not tested against the live API**; expect small fixes.
+- `fetch_sentinel2_gee.py` and `prepare_fields_csb.py` ran successfully on real data (Kansas 2023). The thumbnail step of `validate_alerts.py` has not been run yet.
 
 ## Use it
 ```bash
@@ -93,9 +95,23 @@ for w in 2023-04-17 2023-05-01 2023-05-15 2023-05-29; do
          --window winter_wheat=04-01:05-31 --week $w --out reports/ks
 done
 ```
-> **Status: not yet run on real data.** Add your own results and an honest check of the top alerts
-> (e.g. look at the fields in Sentinel-2 imagery) here once you have them. CSB polygons are estimates
-> and crop labels come from satellite classification, not farm records.
+### Results on real data: winter wheat, Kansas, 2023
+150 winter-wheat fields (USDA Crop Sequence Boundaries, Saline County), Sentinel-2 NDVI from Earth Engine,
+monitoring window 1 Apr - 31 May.
+
+| Week | Alerts (out of 150 fields) |
+|---|---|
+| 2023-04-17 | 1 |
+| 2023-05-01 | 9 |
+| 2023-05-15 | 7 |
+| 2023-05-29 | 5 |
+
+Alerts are a prioritised list of fields worth inspecting, **not** a diagnosis. Whether they correspond to
+real problems is checked with the blind validation below. CSB polygons are estimates and the crop labels
+come from satellite classification, not farm records.
+
+**Blind validation:** pending. Replace this line with the real counts, for example
+"X of Y alerted fields rated as problem vs. X of Y control fields".
 
 ## Files
 | File | Purpose |
@@ -104,8 +120,8 @@ done
 | `run_weekly_report.py` | weekly CSV + HTML report |
 | `evaluate.py` | backtest against baselines |
 | `make_demo_data.py` | synthetic dataset with known problems |
-| `fetch_sentinel2_gee.py` | real Sentinel-2 download (untested) |
-| `prepare_fields_csb.py` | select winter-wheat fields from USDA Crop Sequence Boundaries (Earth Engine, untested end to end) |
+| `fetch_sentinel2_gee.py` | real Sentinel-2 NDVI download (ran on real data) |
+| `prepare_fields_csb.py` | select winter-wheat fields from USDA Crop Sequence Boundaries (ran on real data) |
 | `tests/` | 9 unit tests, including a no-future-data test |
 
 MIT License
