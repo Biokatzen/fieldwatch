@@ -1,0 +1,7 @@
+numpy
+pandas
+matplotlib
+pytest
+# only for fetch_sentinel2_gee.py (real data):
+# earthengine-api
+# geopandas
